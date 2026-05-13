@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
 
+import { useLocationService } from '@/features/location/useLocationService';
+import { useShareLiveLocationStore } from '@/features/location/useShareLiveLocationStore';
 import { subscribeTripChannel } from '@/shared/realtime/realtimeManager';
 import { getGpsCadenceSeconds, useEntitlementsQuery } from '@/shared/entitlements/useEntitlementsQuery';
 import { useSession } from '@/shared/auth/useSession';
-import { useLocationService } from '@/features/location/useLocationService';
 import { useTripSend, useTripState } from '@/features/trips/tripContext';
 
-/** Keeps GPS + Realtime running for the active trip across all driver tabs. */
+/** Trip status Realtime; GPS + Supabase live trail only when trip is active and live sharing is on. */
 export function TripRuntime() {
   const send = useTripSend();
   const state = useTripState();
@@ -32,6 +33,12 @@ export function TripRuntime() {
       onTripStatus: (status) => send({ type: 'REALTIME_STATUS_CHANGE', status }),
     });
   }, [isActive, activeTripId, tenantId, send]);
+
+  useEffect(() => {
+    if (!isActive) {
+      useShareLiveLocationStore.getState().reset();
+    }
+  }, [isActive]);
 
   return null;
 }

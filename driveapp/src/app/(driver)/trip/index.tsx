@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { AlertButton } from '@/features/alerts/AlertButton';
 import { AlertConfirmModal } from '@/features/alerts/AlertConfirmModal';
@@ -9,6 +9,8 @@ import { sendCriticalAlert } from '@/features/alerts/alertApi';
 import { useAlertStore } from '@/features/alerts/useAlertStore';
 import { StopSequence } from '@/features/trips/StopSequence';
 import { TripEndActions, TripStartActions } from '@/features/trips/TripActions';
+import { clearDriverLivePosition } from '@/features/location/livePositionApi';
+import { useShareLiveLocationStore } from '@/features/location/useShareLiveLocationStore';
 import { fetchTripDetail } from '@/features/trips/tripApi';
 import { useTripSend, useTripState } from '@/features/trips/tripContext';
 import { trackEvent } from '@/shared/analytics/analytics';
@@ -39,6 +41,19 @@ function makeStyles(t: AppPalette) {
       alignItems: 'center',
     },
     btnText: { color: t.onPrimary, fontWeight: '700' },
+    shareCard: {
+      marginTop: 28,
+      padding: 16,
+      borderRadius: 12,
+      backgroundColor: t.surfaceElevated,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: t.border,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    shareTextCol: { flex: 1, marginRight: 12 },
+    shareTitle: { fontSize: 17, fontWeight: '600', color: t.text },
+    shareHint: { fontSize: 13, color: t.textMuted, marginTop: 6, lineHeight: 18 },
   });
 }
 
@@ -49,6 +64,8 @@ export default function TripDashboardScreen() {
   const state = useTripState();
   const send = useTripSend();
   const tenantId = useSession((s) => s.tenantId)!;
+  const shareLiveLocation = useShareLiveLocationStore((s) => s.shareLiveLocation);
+  const setShareLiveLocation = useShareLiveLocationStore((s) => s.setShareLiveLocation);
   const [sosOpen, setSosOpen] = useState(false);
   const trackedTripRef = useRef<string | null>(null);
 
@@ -149,6 +166,28 @@ export default function TripDashboardScreen() {
             />
           )}
           <TripEndActions />
+          <View style={styles.shareCard}>
+            <View style={styles.shareTextCol}>
+              <Text style={styles.shareTitle}>Share live location</Text>
+              <Text style={styles.shareHint}>
+                Let dispatchers follow this trip on the map. Uses GPS and data; may use more battery while on.
+              </Text>
+            </View>
+            <Switch
+              accessibilityLabel="Share live location"
+              value={shareLiveLocation}
+              onValueChange={(on) => {
+                if (!on && activeId) {
+                  void clearDriverLivePosition(activeId).catch(() => {});
+                }
+                setShareLiveLocation(on);
+                trackEvent('live_location_toggle', { on });
+              }}
+              trackColor={{ false: t.border, true: t.primary }}
+              thumbColor={t.surfaceElevated}
+              ios_backgroundColor={t.border}
+            />
+          </View>
         </ScrollView>
         <AlertButton onPress={() => setSosOpen(true)} />
         <AlertConfirmModal

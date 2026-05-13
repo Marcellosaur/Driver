@@ -1,6 +1,7 @@
 import type {
   Alert,
   Driver,
+  DriverLivePosition,
   Entitlement,
   LocationSample,
   Membership,
@@ -65,6 +66,12 @@ export interface Database {
         Row: LocationSample;
         Insert: Omit<LocationSample, 'id'> & { id?: number };
         Update: Partial<Omit<LocationSample, 'id'>>;
+        Relationships: [];
+      };
+      driver_live_positions: {
+        Row: DriverLivePosition;
+        Insert: Omit<DriverLivePosition, 'updated_at'> & { updated_at?: string };
+        Update: Partial<Omit<DriverLivePosition, 'trip_id'>>;
         Relationships: [];
       };
       alerts: {

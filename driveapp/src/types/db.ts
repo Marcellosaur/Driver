@@ -102,6 +102,17 @@ export interface Trip {
   updated_at: string;
 }
 
+/** Latest coordinates for a trip; upserted while live sharing is on (Supabase Realtime). */
+export interface DriverLivePosition {
+  trip_id: string;
+  tenant_id: string;
+  user_id: string;
+  lat: number;
+  lng: number;
+  accuracy: number | null;
+  updated_at: string;
+}
+
 export interface LocationSample {
   id: number;
   tenant_id: string;

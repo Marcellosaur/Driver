@@ -7,8 +7,13 @@ import {
   startBackgroundLocationTask,
   stopBackgroundLocationTask,
 } from '@/features/location/BackgroundTask';
+import { clearDriverLivePosition, upsertDriverLivePosition } from '@/features/location/livePositionApi';
 import { LocationPipeline, mapExpoLocation } from '@/features/location/LocationPipeline';
+import { useShareLiveLocationStore } from '@/features/location/useShareLiveLocationStore';
 import { useTripSend } from '@/features/trips/tripContext';
+import { useSession } from '@/shared/auth/useSession';
+
+const LIVE_UPSERT_MIN_MS = 2000;
 
 export function useLocationService(params: {
   isTripActive: boolean;
@@ -17,15 +22,21 @@ export function useLocationService(params: {
   flushIntervalSec: number;
 }): void {
   const send = useTripSend();
+  const userId = useSession((s) => s.userId);
+  const shareLiveLocation = useShareLiveLocationStore((s) => s.shareLiveLocation);
   const pipelineRef = useRef<LocationPipeline | null>(null);
   const subRef = useRef<Location.LocationSubscription | null>(null);
+  const lastLiveUpsertRef = useRef(0);
+
+  const enabled =
+    params.isTripActive && shareLiveLocation && !!params.tripId && !!params.tenantId && !!userId;
 
   useEffect(() => {
     ensureLocationTaskDefined();
   }, []);
 
   useEffect(() => {
-    if (!params.isTripActive || !params.tripId) {
+    if (!enabled) {
       void stopBackgroundLocationTask();
       subRef.current?.remove();
       subRef.current = null;
@@ -34,16 +45,33 @@ export function useLocationService(params: {
       return;
     }
 
+    const tripId = params.tripId!;
+    const tenantId = params.tenantId;
+    const uid = userId!;
+
     const pipeline = new LocationPipeline({
-      tenantId: params.tenantId,
-      tripId: params.tripId,
+      tenantId,
+      tripId,
       flushIntervalSec: params.flushIntervalSec,
       maxBuffer: 10,
     });
     pipelineRef.current = pipeline;
     setBackgroundLocationHandler((locations) => {
       const loc = locations[locations.length - 1];
-      if (loc) pipeline.handleTick(mapExpoLocation(loc));
+      if (!loc) return;
+      const m = mapExpoLocation(loc);
+      pipeline.handleTick(m);
+      const now = Date.now();
+      if (now - lastLiveUpsertRef.current < LIVE_UPSERT_MIN_MS) return;
+      lastLiveUpsertRef.current = now;
+      void upsertDriverLivePosition({
+        tripId,
+        tenantId,
+        userId: uid,
+        lat: m.lat,
+        lng: m.lng,
+        accuracy: loc.coords.accuracy,
+      }).catch(() => {});
     });
     pipeline.start();
 
@@ -72,6 +100,20 @@ export function useLocationService(params: {
             speed: loc.coords.speed ?? undefined,
             bearing: loc.coords.heading ?? undefined,
           });
+
+          const now = Date.now();
+          if (now - lastLiveUpsertRef.current < LIVE_UPSERT_MIN_MS) return;
+          lastLiveUpsertRef.current = now;
+          void upsertDriverLivePosition({
+            tripId,
+            tenantId,
+            userId: uid,
+            lat: loc.coords.latitude,
+            lng: loc.coords.longitude,
+            accuracy: loc.coords.accuracy,
+          }).catch(() => {
+            /* non-fatal; batch trail still buffered */
+          });
         },
       );
     })();
@@ -84,6 +126,9 @@ export function useLocationService(params: {
       subRef.current = null;
       pipeline.stop();
       if (pipelineRef.current === pipeline) pipelineRef.current = null;
+      void clearDriverLivePosition(tripId).catch(() => {
+        /* row may already be gone */
+      });
     };
-  }, [params.isTripActive, params.tenantId, params.tripId, params.flushIntervalSec, send]);
+  }, [enabled, params.tenantId, params.tripId, params.flushIntervalSec, send, userId]);
 }
