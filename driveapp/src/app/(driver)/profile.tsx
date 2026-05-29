@@ -1,13 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import Constants from 'expo-constants';
-import { useMemo } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 
 import { useAlertStore } from '@/features/alerts/useAlertStore';
 import { fetchDriverProfile } from '@/features/profile/driverProfileApi';
 import { useSession } from '@/shared/auth/useSession';
-import type { AppPalette } from '@/shared/ui/theme';
-import { useAppPalette } from '@/shared/ui/useAppTheme';
+import { DispatchHeader } from '@/shared/ui/dispatch/DispatchHeader';
+import { SecondaryDispatchButton } from '@/shared/ui/dispatch/DispatchButtons';
+import { LabelCaps, Mono } from '@/shared/ui/dispatch/Typography';
+import { TerminalCard } from '@/shared/ui/dispatch/TerminalCard';
+import { RouteCodeBadge } from '@/shared/ui/dispatch/StatusBadge';
+import { tokens } from '@/shared/ui/design-tokens';
 
 function formatCreatedAt(iso: string): string {
   try {
@@ -20,39 +23,18 @@ function formatCreatedAt(iso: string): string {
   }
 }
 
-function makeStyles(t: AppPalette) {
-  return StyleSheet.create({
-    scroll: { flexGrow: 1, padding: 20, paddingBottom: 40, backgroundColor: t.background },
-    title: { fontSize: 22, fontWeight: '700', marginBottom: 16, color: t.text },
-    card: {
-      borderRadius: 12,
-      padding: 16,
-      backgroundColor: t.surfaceElevated,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: t.border,
-      gap: 14,
-    },
-    fieldLabel: { fontSize: 13, fontWeight: '600', color: t.textMuted, textTransform: 'uppercase' },
-    fieldValue: { fontSize: 16, color: t.text, marginTop: 4 },
-    hint: { fontSize: 15, color: t.textSecondary, marginTop: 8 },
-    error: { fontSize: 15, color: t.danger, marginTop: 8 },
-    footer: { marginTop: 20, gap: 8 },
-    meta: { fontSize: 13, color: t.textMuted },
-    btn: {
-      marginTop: 8,
-      backgroundColor: t.secondaryButtonBg,
-      padding: 14,
-      borderRadius: 8,
-      alignItems: 'center',
-    },
-    btnText: { color: t.secondaryButtonText, fontWeight: '700' },
-  });
+function ProfileField(props: { label: string; value: string }) {
+  return (
+    <View className="border-b border-border py-3 last:border-b-0">
+      <LabelCaps>{props.label}</LabelCaps>
+      <Text className="mt-1 font-sans text-body-md text-foreground" selectable>
+        {props.value}
+      </Text>
+    </View>
+  );
 }
 
 export default function ProfileScreen() {
-  const t = useAppPalette();
-  const styles = useMemo(() => makeStyles(t), [t]);
-
   const signOut = useSession((s) => s.signOut);
   const sessionStatus = useSession((s) => s.status);
   const userId = useSession((s) => s.userId);
@@ -74,83 +56,72 @@ export default function ProfileScreen() {
       : '—';
 
   return (
-    <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-      <Text style={styles.title}>Profile</Text>
+    <View className="flex-1 bg-background">
+      <DispatchHeader showMenu />
+      <ScrollView contentContainerClassName="px-4 pb-28 pt-2" keyboardShouldPersistTaps="handled">
+        <Text className="mb-4 font-sans text-headline-md font-bold text-foreground">Profile</Text>
 
-      {sessionStatus === 'loading' ? (
-        <ActivityIndicator size="large" color={t.primary} />
-      ) : sessionStatus === 'unauthenticated' ? (
-        <Text style={styles.hint}>Sign in to view your driver profile.</Text>
-      ) : !canQueryDriver ? (
-        <Text style={styles.hint}>
-          No driver record is linked to this account yet. Complete onboarding or contact support.
-        </Text>
-      ) : isLoading ? (
-        <ActivityIndicator size="large" color={t.primary} />
-      ) : isError ? (
-        <Text style={styles.error}>
-          {error instanceof Error ? error.message : 'Could not load driver profile.'}
-        </Text>
-      ) : data ? (
-        <View style={styles.card}>
-          <View>
-            <Text style={styles.fieldLabel}>Full name</Text>
-            <Text style={styles.fieldValue} selectable>
-              {data.full_name}
-            </Text>
+        {sessionStatus === 'loading' || (canQueryDriver && isLoading) ? (
+          <View className="items-center py-12">
+            <ActivityIndicator size="large" color={tokens.primary} />
           </View>
-          <View>
-            <Text style={styles.fieldLabel}>License number</Text>
-            <Text style={styles.fieldValue} selectable>
-              {licenseDisplay}
-            </Text>
-          </View>
-          <View>
-            <Text style={styles.fieldLabel}>Status</Text>
-            <Text style={styles.fieldValue} selectable>
-              {data.status}
-            </Text>
-          </View>
-          <View>
-            <Text style={styles.fieldLabel}>Member since</Text>
-            <Text style={styles.fieldValue} selectable>
-              {formatCreatedAt(data.created_at)}
-            </Text>
-          </View>
-          <View>
-            <Text style={styles.fieldLabel}>Tenant ID</Text>
-            <Text style={styles.fieldValue} selectable>
-              {data.tenant_id}
-            </Text>
-          </View>
-        </View>
-      ) : null}
-
-      <View style={styles.footer}>
-        {role ? (
-          <Text style={styles.meta} selectable>
-            Role: {role}
+        ) : sessionStatus === 'unauthenticated' ? (
+          <Text className="font-sans text-body-md text-foreground-secondary">
+            Sign in to view your driver profile.
           </Text>
+        ) : !canQueryDriver ? (
+          <Text className="font-sans text-body-md text-foreground-secondary">
+            No driver record is linked to this account yet. Complete onboarding or contact support.
+          </Text>
+        ) : isError ? (
+          <Text className="font-sans text-body-md text-danger">
+            {error instanceof Error ? error.message : 'Could not load driver profile.'}
+          </Text>
+        ) : data ? (
+          <>
+            <View className="mb-4 flex-row items-center justify-between">
+              <View>
+                <Text className="font-sans text-display-lg font-bold text-foreground">{data.full_name}</Text>
+                <Text className="mt-1 font-sans text-body-md text-foreground-secondary">
+                  Operator profile
+                </Text>
+              </View>
+              {driverId ? <RouteCodeBadge code={`DRV-${driverId.slice(0, 6).toUpperCase()}`} /> : null}
+            </View>
+            <TerminalCard>
+              <ProfileField label="Full name" value={data.full_name} />
+              <ProfileField label="License number" value={licenseDisplay} />
+              <ProfileField label="Status" value={data.status} />
+              <ProfileField label="Member since" value={formatCreatedAt(data.created_at)} />
+              <ProfileField label="Tenant ID" value={data.tenant_id} />
+            </TerminalCard>
+          </>
         ) : null}
-        <Text style={styles.meta}>App v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
-        {(userId || driverId) && (
-          <Text style={styles.meta} selectable>
-            {userId ? `User ID: ${userId}` : ''}
-            {userId && driverId ? ' · ' : ''}
-            {driverId ? `Driver ID: ${driverId}` : ''}
-          </Text>
-        )}
-        <Pressable
-          style={styles.btn}
-          onPress={() => {
-            useAlertStore.getState().reset();
-            void signOut();
-          }}
-          accessibilityRole="button"
-          accessibilityLabel="Sign out">
-          <Text style={styles.btnText}>Sign out</Text>
-        </Pressable>
-      </View>
-    </ScrollView>
+
+        <View className="mt-6 gap-2">
+          {role ? <Mono className="text-foreground-muted">Role: {role}</Mono> : null}
+          <Mono className="text-foreground-muted">
+            App v{Constants.expoConfig?.version ?? '1.0.0'}
+          </Mono>
+          {(userId || driverId) && (
+            <Mono className="text-[11px] text-foreground-muted" selectable>
+              {userId ? `UID ${userId.slice(0, 8)}…` : ''}
+              {userId && driverId ? ' · ' : ''}
+              {driverId ? `DRV ${driverId.slice(0, 8)}…` : ''}
+            </Mono>
+          )}
+          <SecondaryDispatchButton
+            label="Sign out"
+            className="mt-4"
+            onPress={() => {
+              useAlertStore.getState().reset();
+              void signOut();
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Sign out"
+          />
+        </View>
+      </ScrollView>
+    </View>
   );
 }

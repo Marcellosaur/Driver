@@ -1,6 +1,8 @@
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 
+import { supportsBackgroundLocation } from '@/features/location/locationCapabilities';
+
 export const TEROBYTEZ_LOCATION_TASK = 'TEROBYTEZ_LOCATION_TASK';
 
 type TaskBody = { locations: Location.LocationObject[] };
@@ -16,6 +18,7 @@ export function setBackgroundLocationHandler(
 }
 
 export function ensureLocationTaskDefined(): void {
+  if (!supportsBackgroundLocation()) return;
   if (defined) return;
   defined = true;
   TaskManager.defineTask(TEROBYTEZ_LOCATION_TASK, async ({ data, error }) => {
@@ -26,6 +29,8 @@ export function ensureLocationTaskDefined(): void {
 }
 
 export async function startBackgroundLocationTask(): Promise<void> {
+  if (!supportsBackgroundLocation()) return;
+
   const started = await Location.hasStartedLocationUpdatesAsync(TEROBYTEZ_LOCATION_TASK);
   if (started) return;
 
@@ -42,6 +47,8 @@ export async function startBackgroundLocationTask(): Promise<void> {
 }
 
 export async function stopBackgroundLocationTask(): Promise<void> {
+  if (!supportsBackgroundLocation()) return;
+
   const started = await Location.hasStartedLocationUpdatesAsync(TEROBYTEZ_LOCATION_TASK);
   if (started) {
     await Location.stopLocationUpdatesAsync(TEROBYTEZ_LOCATION_TASK);

@@ -1,88 +1,44 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useAlertStore } from '@/features/alerts/useAlertStore';
+import { TripProvider } from '@/features/trips/tripContext';
+import { TripRuntime } from '@/features/trips/TripRuntime';
 import { registerDevice } from '@/shared/auth/registerDevice';
 import { useSession } from '@/shared/auth/useSession';
 import { getExpoPushTokenIfAvailable } from '@/shared/push/expoNotificationsSafe';
-import type { AppPalette } from '@/shared/ui/theme';
+import { tokens } from '@/shared/ui/design-tokens';
+import { Body, SecondaryButton, SecondaryButtonText, Title } from '@/shared/ui/primitives';
 import { useAppPalette } from '@/shared/ui/useAppTheme';
-import { TripProvider } from '@/features/trips/tripContext';
-import { TripRuntime } from '@/features/trips/TripRuntime';
 
 const WRITE_CAPABLE = new Set(['dispatcher', 'company_admin']);
 
-function makeLayoutStyles(t: AppPalette) {
-  return StyleSheet.create({
-    centered: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 24,
-      backgroundColor: t.background,
-    },
-    title: {
-      fontSize: 20,
-      fontWeight: '600',
-      marginBottom: 8,
-      color: t.text,
-    },
-    body: {
-      fontSize: 16,
-      textAlign: 'center',
-      color: t.textSecondary,
-    },
-    logoutBtn: {
-      marginTop: 24,
-      paddingVertical: 14,
-      paddingHorizontal: 28,
-      borderRadius: 8,
-      backgroundColor: t.secondaryButtonBg,
-      alignItems: 'center',
-    },
-    logoutBtnText: {
-      color: t.secondaryButtonText,
-      fontWeight: '700',
-      fontSize: 16,
-    },
-  });
-}
-
-function SignOutFooter(props: {
-  styles: ReturnType<typeof makeLayoutStyles>;
-  onSignOut: () => void | Promise<void>;
-}) {
+function SignOutFooter(props: { onSignOut: () => void | Promise<void> }) {
   return (
-    <Pressable
-      style={props.styles.logoutBtn}
-      onPress={() => void props.onSignOut()}
-      accessibilityRole="button"
-      accessibilityLabel="Sign out">
-      <Text style={props.styles.logoutBtnText}>Sign out</Text>
-    </Pressable>
+    <SecondaryButton onPress={() => void props.onSignOut()} accessibilityRole="button" accessibilityLabel="Sign out">
+      <SecondaryButtonText>Sign out</SecondaryButtonText>
+    </SecondaryButton>
   );
 }
 
-function AccessDenied(props: {
-  styles: ReturnType<typeof makeLayoutStyles>;
-  onSignOut: () => void | Promise<void>;
-}) {
+function AccessDenied(props: { onSignOut: () => void | Promise<void> }) {
   return (
-    <View style={props.styles.centered}>
-      <Text style={props.styles.title}>Access Denied</Text>
-      <Text style={props.styles.body}>
+    <View className="flex-1 items-center justify-center bg-background p-6">
+      <Title className="mb-2 text-xl">Access Denied</Title>
+      <Body className="text-center">
         Your account needs dispatcher or company_admin membership to use the driver app and post
         locations (RLS).
-      </Text>
-      <SignOutFooter styles={props.styles} onSignOut={props.onSignOut} />
+      </Body>
+      <SignOutFooter onSignOut={props.onSignOut} />
     </View>
   );
 }
 
 export default function DriverLayout() {
   const t = useAppPalette();
-  const styles = useMemo(() => makeLayoutStyles(t), [t]);
+  const alertStatus = useAlertStore((s) => s.status);
 
   const status = useSession((s) => s.status);
   const userId = useSession((s) => s.userId);
@@ -117,7 +73,7 @@ export default function DriverLayout() {
 
   if (status === 'loading') {
     return (
-      <View style={styles.centered}>
+      <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" color={t.primary} />
       </View>
     );
@@ -129,16 +85,16 @@ export default function DriverLayout() {
 
   if (!driverId || !tenantId || !membershipRole) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.title}>Driver profile missing</Text>
-        <Text style={styles.body}>No drivers row or tenant could be resolved for this user.</Text>
-        <SignOutFooter styles={styles} onSignOut={signOut} />
+      <View className="flex-1 items-center justify-center bg-background p-6">
+        <Title className="mb-2 text-xl">Driver profile missing</Title>
+        <Body className="text-center">No drivers row or tenant could be resolved for this user.</Body>
+        <SignOutFooter onSignOut={signOut} />
       </View>
     );
   }
 
   if (!WRITE_CAPABLE.has(membershipRole)) {
-    return <AccessDenied styles={styles} onSignOut={signOut} />;
+    return <AccessDenied onSignOut={signOut} />;
   }
 
   return (
@@ -154,6 +110,7 @@ export default function DriverLayout() {
           },
           tabBarActiveTintColor: t.primary,
           tabBarInactiveTintColor: t.textMuted,
+          tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
         }}>
         <Tabs.Screen
           name="trip"
@@ -176,8 +133,10 @@ export default function DriverLayout() {
           name="alerts"
           options={{
             title: 'Alerts',
+            tabBarBadge: alertStatus === 'failed' || alertStatus === 'pending' ? '' : undefined,
+            tabBarBadgeStyle: { backgroundColor: tokens.emergency, minWidth: 8, maxHeight: 8 },
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="warning-outline" color={color} size={size} />
+              <Ionicons name="notifications-outline" color={color} size={size} />
             ),
           }}
         />

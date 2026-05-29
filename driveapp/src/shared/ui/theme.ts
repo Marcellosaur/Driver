@@ -1,5 +1,7 @@
 import { DarkTheme, DefaultTheme, type Theme } from '@react-navigation/native';
 
+import { tokens } from '@/shared/ui/design-tokens';
+
 export type AppColorScheme = 'light' | 'dark';
 
 export interface AppPalette {
@@ -72,42 +74,41 @@ const light: Omit<AppPalette, 'scheme'> = {
 };
 
 const dark: Omit<AppPalette, 'scheme'> = {
-  background: '#121212',
-  surface: '#1e1e1e',
-  surfaceElevated: '#2a2a2a',
-  text: '#eceff1',
-  textSecondary: '#b0bec5',
-  textMuted: '#78909c',
-  border: '#3d4446',
-  inputBackground: '#1e1e1e',
-  inputBorder: '#3d4446',
-  placeholder: '#78909c',
-  primary: '#64b5f6',
-  onPrimary: '#0d1927',
-  danger: '#ef5350',
-  onDanger: '#1a0000',
-  successBannerBg: '#1b3a1e',
-  successBannerText: '#a5d6a7',
-  seqBadgeBg: '#37474f',
-  seqBadgeText: '#eceff1',
-  tabBar: '#1e1e1e',
-  tabBarBorder: '#2a2a2a',
+  background: tokens.background,
+  surface: tokens.surfaceContainer,
+  surfaceElevated: tokens.surfaceContainerHigh,
+  text: tokens.onSurface,
+  textSecondary: tokens.onSurfaceVariant,
+  textMuted: tokens.outline,
+  border: tokens.outline,
+  inputBackground: tokens.surfaceContainerLow,
+  inputBorder: '#3b4a46',
+  placeholder: tokens.outline,
+  primary: tokens.primary,
+  onPrimary: tokens.onPrimary,
+  danger: tokens.emergency,
+  onDanger: tokens.onEmergency,
+  successBannerBg: tokens.statusActive,
+  successBannerText: '#ffffff',
+  seqBadgeBg: tokens.surfaceContainerHigh,
+  seqBadgeText: tokens.primary,
+  tabBar: tokens.tabBar,
+  tabBarBorder: tokens.tabBarBorder,
   overlay: 'rgba(0,0,0,0.65)',
-  modalSurface: '#2a2a2a',
-  modalText: '#eceff1',
-  modalTextSecondary: '#b0bec5',
-  modalBorder: '#3d4446',
-  link: '#90caf9',
-  mapPolyline: '#64b5f6',
-  mapFallbackBg: '#0d1b2a',
+  modalSurface: tokens.surfaceContainer,
+  modalText: tokens.onSurface,
+  modalTextSecondary: tokens.onSurfaceVariant,
+  modalBorder: tokens.primary,
+  link: tokens.primary,
+  mapPolyline: tokens.mapPolyline,
+  mapFallbackBg: tokens.mapFallback,
   shadow: '#000000',
-  secondaryButtonBg: '#424242',
-  secondaryButtonText: '#eceff1',
+  secondaryButtonBg: tokens.surfaceContainer,
+  secondaryButtonText: tokens.onSurface,
 };
 
-export function getPalette(scheme: 'light' | 'dark' | null | undefined): AppPalette {
-  const s = scheme === 'dark' ? 'dark' : 'light';
-  return { scheme: s, ...(s === 'dark' ? dark : light) };
+export function getPalette(_scheme: 'light' | 'dark' | null | undefined): AppPalette {
+  return { scheme: 'dark', ...dark };
 }
 
 export function buildNavigationTheme(scheme: 'light' | 'dark' | null | undefined): Theme {

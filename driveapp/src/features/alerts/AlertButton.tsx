@@ -1,51 +1,19 @@
-import { useMemo } from 'react';
-import { Platform, Pressable, StyleSheet, Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Platform, Pressable, Text } from 'react-native';
 
-import type { AppPalette } from '@/shared/ui/theme';
-import { useAppPalette } from '@/shared/ui/useAppTheme';
+import { tokens } from '@/shared/ui/design-tokens';
 
-function makeStyles(t: AppPalette) {
-  return StyleSheet.create({
-    fab: {
-      position: 'absolute',
-      right: 20,
-      bottom: 100,
-      width: 64,
-      height: 64,
-      borderRadius: 32,
-      backgroundColor: t.danger,
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 999,
-      elevation: 8,
-      shadowColor: t.shadow,
-      shadowOpacity: 0.25,
-      shadowRadius: 6,
-      shadowOffset: { width: 0, height: 2 },
-    },
-    fabWeb: {
-      boxShadow: `0 2px 6px rgba(0,0,0,0.25)`,
-    },
-    fabPressed: { opacity: 0.9 },
-    label: { color: t.onDanger, fontWeight: '800', fontSize: 16 },
-  });
-}
-
-export function AlertButton(props: { onPress: () => void }) {
-  const t = useAppPalette();
-  const styles = useMemo(() => makeStyles(t), [t]);
-
+export function AlertButton(props: { onPress: () => void; className?: string }) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel="SOS emergency alert"
       onPress={props.onPress}
-      style={({ pressed }) => [
-        styles.fab,
-        Platform.OS === 'web' && styles.fabWeb,
-        pressed && styles.fabPressed,
-      ]}>
-      <Text style={styles.label}>SOS</Text>
+      className={`absolute bottom-[100px] right-5 z-[999] h-[72px] w-[72px] items-center justify-center rounded-full border-2 border-emergency/50 bg-emergency active:opacity-90 ${
+        Platform.OS === 'web' ? 'shadow-lg shadow-emergency/40' : 'elevation-8'
+      } ${props.className ?? ''}`}>
+      <Ionicons name="alert" size={22} color={tokens.onEmergency} />
+      <Text className="font-sans text-xs font-extrabold uppercase text-on-danger">SOS</Text>
     </Pressable>
   );
 }

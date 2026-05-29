@@ -7,6 +7,7 @@ import {
   startBackgroundLocationTask,
   stopBackgroundLocationTask,
 } from '@/features/location/BackgroundTask';
+import { supportsForegroundLocation } from '@/features/location/locationCapabilities';
 import { clearDriverLivePosition, upsertDriverLivePosition } from '@/features/location/livePositionApi';
 import { LocationPipeline, mapExpoLocation } from '@/features/location/LocationPipeline';
 import { useShareLiveLocationStore } from '@/features/location/useShareLiveLocationStore';
@@ -29,13 +30,20 @@ export function useLocationService(params: {
   const lastLiveUpsertRef = useRef(0);
 
   const enabled =
-    params.isTripActive && shareLiveLocation && !!params.tripId && !!params.tenantId && !!userId;
+    supportsForegroundLocation() &&
+    params.isTripActive &&
+    shareLiveLocation &&
+    !!params.tripId &&
+    !!params.tenantId &&
+    !!userId;
 
   useEffect(() => {
     ensureLocationTaskDefined();
   }, []);
 
   useEffect(() => {
+    if (!supportsForegroundLocation()) return;
+
     if (!enabled) {
       void stopBackgroundLocationTask();
       subRef.current?.remove();

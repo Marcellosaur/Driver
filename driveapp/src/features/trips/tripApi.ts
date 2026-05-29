@@ -4,6 +4,7 @@ import { ApiError, authenticatedFetch } from '@/shared/api/apiClient';
 import { enqueueOutbound } from '@/shared/api/offlineQueue';
 import { getSupabase } from '@/shared/auth/authClient';
 import { env } from '@/shared/config/env';
+import { toError } from '@/shared/errors';
 
 export interface TripStopRow {
   sequence_order: number;
@@ -52,7 +53,7 @@ export async function fetchAssignedTrips(tenantId: string, driverId: string): Pr
     .eq('status', 'scheduled')
     .order('scheduled_start', { ascending: true });
 
-  if (error) throw error;
+  if (error) throw toError(error, 'Failed to load assigned trips');
   return (data ?? []) as Trip[];
 }
 
@@ -64,9 +65,11 @@ export async function fetchActiveTrip(tenantId: string, driverId: string): Promi
     .eq('tenant_id', tenantId)
     .eq('driver_id', driverId)
     .eq('status', 'active')
+    .order('scheduled_start', { ascending: false })
+    .limit(1)
     .maybeSingle();
 
-  if (error) throw error;
+  if (error) throw toError(error, 'Failed to check for active trip');
   return (data as Trip | null) ?? null;
 }
 

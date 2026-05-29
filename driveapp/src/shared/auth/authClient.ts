@@ -1,15 +1,9 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import * as SecureStore from 'expo-secure-store';
 
 import { env } from '@/shared/config/env';
+import { secureStorage } from '@/shared/auth/secureStorage';
 
 const SUPABASE_AUTH_KEY = 'terobytez_supabase_session';
-
-const secureStoreAdapter = {
-  getItem: (key: string) => SecureStore.getItemAsync(key),
-  setItem: (key: string, value: string) => SecureStore.setItemAsync(key, value),
-  removeItem: (key: string) => SecureStore.deleteItemAsync(key),
-};
 
 let client: SupabaseClient | null = null;
 
@@ -21,7 +15,7 @@ export function getSupabase(): SupabaseClient {
     }
     client = createClient(env.supabaseUrl, env.supabaseAnonKey, {
       auth: {
-        storage: secureStoreAdapter,
+        storage: secureStorage,
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: false,

@@ -1,4 +1,4 @@
-import * as SecureStore from 'expo-secure-store';
+import { secureStorage } from '@/shared/auth/secureStorage';
 
 const ACCESS = 'terobytez_access_token';
 const REFRESH = 'terobytez_refresh_token';
@@ -9,18 +9,18 @@ export interface StoredTokens {
 }
 
 export async function saveTokens(tokens: StoredTokens): Promise<void> {
-  await SecureStore.setItemAsync(ACCESS, tokens.access_token);
-  await SecureStore.setItemAsync(REFRESH, tokens.refresh_token);
+  await secureStorage.setItem(ACCESS, tokens.access_token);
+  await secureStorage.setItem(REFRESH, tokens.refresh_token);
 }
 
 export async function loadTokens(): Promise<StoredTokens | null> {
-  const access = await SecureStore.getItemAsync(ACCESS);
-  const refresh = await SecureStore.getItemAsync(REFRESH);
+  const access = await secureStorage.getItem(ACCESS);
+  const refresh = await secureStorage.getItem(REFRESH);
   if (!access || !refresh) return null;
   return { access_token: access, refresh_token: refresh };
 }
 
 export async function clearTokens(): Promise<void> {
-  await SecureStore.deleteItemAsync(ACCESS);
-  await SecureStore.deleteItemAsync(REFRESH);
+  await secureStorage.removeItem(ACCESS);
+  await secureStorage.removeItem(REFRESH);
 }

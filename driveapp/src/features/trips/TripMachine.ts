@@ -3,6 +3,7 @@ import { assign, fromPromise, setup } from 'xstate';
 import type { Trip, TripStatus } from '@/types/db';
 
 import { fetchActiveTrip, fetchAssignedTrips, patchTripStatus } from '@/features/trips/tripApi';
+import { formatUnknownError } from '@/shared/errors';
 
 export type TripMachineInput = {
   tenantId: string;
@@ -102,8 +103,7 @@ export const tripMachine = setup({
         onError: {
           target: 'error',
           actions: assign({
-            error: ({ event }) =>
-              event.error instanceof Error ? event.error.message : 'Boot check failed',
+            error: ({ event }) => formatUnknownError(event.error, 'Boot check failed'),
           }),
         },
       },
@@ -122,8 +122,7 @@ export const tripMachine = setup({
         onError: {
           target: 'error',
           actions: assign({
-            error: ({ event }) =>
-              event.error instanceof Error ? event.error.message : 'Failed to load trips',
+            error: ({ event }) => formatUnknownError(event.error, 'Failed to load trips'),
           }),
         },
       },

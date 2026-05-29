@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 6 20 35;
+    --surface: 19 32 48;
+    --surface-elevated: 30 43 59;
+    --surface-low: 15 28 44;
+    --foreground: 214 228 249;
+    --foreground-secondary: 186 202 197;
+    --foreground-muted: 133 148 143;
+    --border: 133 148 143;
+    --input: 15 28 44;
+    --input-border: 59 74 70;
+    --placeholder: 133 148 143;
+    --primary: 68 229 204;
+    --on-primary: 0 55 48;
+    --danger: 255 59 48;
+    --on-danger: 255 255 255;
+    --emergency: 255 59 48;
+    --success-banner: 34 197 94;
+    --success-banner-text: 255 255 255;
+    --seq-badge: 30 43 59;
+    --seq-badge-text: 68 229 204;
+    --tab-bar: 6 20 35;
+    --tab-bar-border: 30 43 59;
+    --modal-surface: 19 32 48;
+    --modal-text: 214 228 249;
+    --modal-text-secondary: 186 202 197;
+    --modal-border: 68 229 204;
+    --link: 68 229 204;
+    --map-polyline: 68 229 204;
+    --map-fallback: 15 28 44;
+    --secondary-btn: 19 32 48;
+    --secondary-btn-text: 214 228 249;
+    --status-scheduled: 245 158 11;
+    --status-active: 34 197 94;
+    --status-pending: 107 114 128;
+    --status-alert: 255 59 48;
+    --status-completed: 107 114 128;
+    --status-info: 56 189 248;
+    --emergency-surface: 147 0 10;
+    --emergency-muted: 105 0 3;
+  }
+}

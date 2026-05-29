@@ -4,5 +4,5 @@ import { getPalette, type AppPalette } from '@/shared/ui/theme';
 
 export function useAppPalette(): AppPalette {
   const scheme = useColorScheme();
-  return getPalette(scheme);
+  return getPalette(scheme === 'dark' ? 'dark' : 'light');
 }
